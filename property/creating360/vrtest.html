@@ -1,0 +1,234 @@
+<html>
+
+<head>
+    <title>3D Tour Constructor</title>
+
+    <link href='https://fonts.googleapis.com/css?family=Raleway:300,400' rel='stylesheet' type='text/css'>
+
+    <!--  3D tour: for Client  -->
+    <script src="js/mod_three.js"></script>
+    <script src="js/Panorama_hero.js"></script>
+
+    <!-- Virtual Tour Constructor: for admin panel or hidden page-->
+    <script src="js/jquery-2.2.3.min.js"></script>
+    <script src="Filemanager/scripts/dropzone/downloads/dropzone.js"></script>
+    <script src="js/VTour_Constructor.js"></script>
+
+    <link rel="stylesheet" href="css/VTour_Constructor.css">
+
+
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        
+        #my_tour canvas {
+            /* IMPORTANT*/
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #my_tour {
+            width: 100%;
+            height: 100%;
+            cursor: move;
+            /* IMPORTANT*/
+            position: relative;
+            overflow: hidden;
+        }
+        /* If JS, WebGL is disabled in browser*/
+        
+        .panorama_no_script,
+        .panorama_impossible {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            vertical-align: middle;
+            background: url(3d_tours/Room-1.jpg) center no-repeat;
+            font-size: 16px;
+        }
+        /* hide 'panorama_impossible' by default */
+        
+        .panorama_impossible {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="my_tour" style="font-family: 'Raleway', sans-serif; text-transform: uppercase;">
+
+        <!-- Content if WebGL and Canvas renderer not supported in browser  -->
+        <table class="panorama_impossible">
+            <tr>
+                <td>
+                    PLease, use the more new Device or Browser with WebGL support to watch the interactive 3d tour!
+                </td>
+            </tr>
+        </table>
+
+        <!-- Content if JS is disabled in browser  -->
+        <noscript>
+        <table class="panorama_no_script">
+            <tr>
+                <td>
+                    PLease, enable the JavaScript in your browser settings
+                    to watch the interactive 3d tour!
+                </td>
+            </tr>
+
+        </table>
+    </noscript>
+
+        <!-----------------------------------------------
+    *        Virtual Tour Constructor elements       *
+    ------------------------------------------------->
+
+        <!-- Hide tool containers if JS disabled -->
+        <noscript>
+        <style>
+            #pr_tools_container, #pr_button_hide {
+                display: none;
+            }
+        </style>
+    </noscript>
+
+        <!-- Button for hide & show develop tools -->
+        <div id="pr_button_hide" txt_show="Show" txt_hide="Hide"></div>
+
+        <!-- Virtual Tour Constructor Controls -->
+        <div id="pr_tools_container">
+
+            <!--  File Manager  -->
+            <iframe id="pr_file_manager"></iframe>
+
+            <!-- Move & Delete Links -->
+            <table class="tool_panel" id="panel_link_actions">
+                <tr>
+                    <td colspan="3">Link tools</td>
+                </tr>
+
+                <tr>
+                    <td id="pr_state_none">Active Links</td>
+                    <td id="pr_state_del"> Delete</td>
+                    <td id="pr_state_move">Move</td>
+                </tr>
+            </table>
+
+            <!-- Panoramas Panel -->
+            <table class="tool_panel" id="pr_table_panoramas" txt_delete="X">
+                <tr>
+                    <td colspan="2" id="pr_button_add_panorama" class="pr_head_button">Add Panorama</td>
+                </tr>
+
+                <!-- Rows with existing panoramas will generate automaticaly  -->
+            </table>
+
+            <!-- Add Link Panel -->
+            <table class="tool_panel" id="panel_add_link">
+                <!-- link target-->
+                <tr>
+                    <td colspan="2"><label for="pr_select_link_target">Target</label></td>
+                    <td colspan="2"><select id="pr_select_link_target"></select></td>
+                </tr>
+
+                <!-- link image -->
+                <tr>
+                    <td colspan="2">Image</td>
+                    <td><img id="pr_image_input"></td>
+                    <td id="pr_change_image">Change</td>
+                </tr>
+
+                <!-- link hover hover -->
+                <tr>
+                    <td colspan="2">Image Hover</td>
+                    <td><img id="pr_image_hover_input"></td>
+                    <td id="pr_change_hover_image">Change</td>
+                </tr>
+
+                <!--  link width & height  -->
+                <tr>
+                    <td>
+                        <Label for="pr_link_width">Width</Label>
+                    </td>
+                    <td><input id="pr_link_width" type="number" min="10" max="300" value="80"></td>
+
+                    <td><label for="pr_link_height">Height</label></td>
+                    <td><input id="pr_link_height" type="number" min="10" max="300" value="80"></td>
+                </tr>
+
+                <!-- add link button -->
+                <tr>
+                    <td colspan="4" id="pr_add_link" class="pr_head_button" style="margin-top: 5px">Add Link
+                    </td>
+                </tr>
+
+            </table>
+
+            <!-- Save & Load buttons -->
+            <table class="tool_panel" id="panel_save_load">
+                <tr>
+                    <td id="pr_save">Save</td>
+                    <td id="pr_load">Load</td>
+                </tr>
+            </table>
+
+            <!-- Message Box -->
+            <div id="pr_message_panel_bg"></div>
+            <table id="pr_message_panel">
+                <tr>
+                    <td>
+                        <div class="message_container">
+                            <div id="pr_message_text">
+                                <label for="pr_message_input_text">Message:</label>
+                            </div>
+                            <input type="text" value="my_tour_" id="pr_message_input_text">
+
+                            <!--  message box buttons  -->
+                            <div>
+                                <span id="pr_message_ok" class="pr_head_button">Ok</span>
+                                <span id="pr_message_cancel" class="pr_head_button">Cancel</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+    </div>
+
+    <script>
+        var container = document.getElementById('my_tour');
+        var panorama_hero = new THREE.Panorama_hero(container);
+
+        panorama_hero.init({
+
+            auto_rotate_speed: false,
+            hand_rotate_speed: true,
+            zoom_speed: false,
+            link_scale: 30,
+            preloader_gif: "/tour/3d_tour/preloader.gif",
+
+            canvas2d_if_no_webgl: true,
+            panorama_impossible_class: "panorama_impossible"
+        });
+
+        // Check WebGL or Canvas2d Support
+        if (panorama_hero.panorama_possible) {
+
+
+            THREE.VTour_constructor.attach_to_instance(panorama_hero, "Filemanager", "/tour/3d_tour/", {
+                button: "pr_button",
+                button_active: "pr_button_active"
+            });
+        }
+    </script>
+
+</body>
+
+</html>
